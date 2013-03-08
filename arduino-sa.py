@@ -1,5 +1,10 @@
 #!/usr/bin/python2.7
-
+""" Client utility for the Arduino Spectrum Analyzer as found on github:
+https://github.com/frack/Arduino-SpectrumAnalyzer
+More information on how to build this device:
+http://frack.nl/wiki/Arduino_Spectrum_Analyzer """
+_author__ = 'Rudi Daemen <fludizz@gmail.com>'
+__version__ = '0.2'
 
 # Wifi|    Frequency (MHz)
 # Chn | Center | Start | End      
@@ -20,9 +25,11 @@
 
 import serial
 import time
+import sys
+import optparse
 import matplotlib.pyplot as plt
 
-def ReadSingleSweep(device, baud=57600):
+def ReadSingleSweep(device='ttyUSB0', baud=57600):
   """ Returns a list of 100 tuples. Each tuple is a 1MHz channel paired with
   it's RSSI. """
   arsa = serial.Serial(device, baud, timeout=1)
@@ -41,9 +48,8 @@ def ReadSingleSweep(device, baud=57600):
   arsa.close()
   return data
 
-def ReadForever(device, baud=57600):
-  """ Returns a list of 100 tuples. Each tuple is a 1MHz channel paired with
-  it's RSSI. """
+def ReadForever(device='ttyUSB0', baud=57600):
+  """ Prints the Frequency and it's RSSI and loops forever. """
   arsa = serial.Serial(device, baud, timeout=1)
   arsa.write('l')
   while True:
@@ -53,12 +59,13 @@ def ReadForever(device, baud=57600):
     except ValueError:
       pass
 
-def PlotSomeStuff():
+def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
+  """ Uses ReadSingleSweep to build up individual graph data and plots
+  it to the screen. It leaves a ghost graph for previous values. """
   plt.ion()
   x2 = y2 = None
-#  plt.show(block=False)
   while True:
-    data = ReadSingleSweep('/dev/ttyUSB3')
+    data = ReadSingleSweep(device, baud)
     x = []
     y = []
     for freq, lvl in data.iteritems():
@@ -80,6 +87,18 @@ def PlotSomeStuff():
   
 
 if __name__ == '__main__':
-#  print ReadSingleSweep('/dev/ttyUSB3')
-  PlotSomeStuff()
-#  ReadForever('/dev/ttyUSB3')
+  usage = "usage: %prog [options]"
+  parser = optparse.OptionParser(usage=usage)
+  parser.add_option("-d", "--device", metavar="DEVICE", default="/dev/ttyUSB0",
+                    help="The serial device the Arduino is connected to.")
+  parser.add_option("-b", "--baud", metavar="BAUD", default=57600, type="int",
+                    help="Baudrate at which the Arduino is communicating.")
+  (opts, args) = parser.parse_args()
+  try:
+    print "%s: Unrecognized argument \'%s\'" % (sys.argv[0], args[0])
+    print "Try \'%s --help\' for more information." % sys.argv[0]
+    sys.exit(1)
+  except IndexError:
+    pass
+  print "Using device %s at %i baud..." % (opts.device, opts.baud)
+  PlotSomeStuff(opts.device, opts.baud)
