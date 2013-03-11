@@ -26,49 +26,61 @@ __version__ = '0.2'
 import serial
 import time
 import sys
+import threading
 import optparse
 import matplotlib.pyplot as plt
 
-def ReadSingleSweep(device='ttyUSB0', baud=57600):
-  """ Returns a list of 100 tuples. Each tuple is a 1MHz channel paired with
-  it's RSSI. """
-  arsa = serial.Serial(device, baud, timeout=1)
-  arsa.write('l')
+def ArduinoSerial(device='ttyUSB0', baud=57600):
+  """ This function Opens the arduino, resets the device by sending a DTR signal
+  and then checks if it is an Arduino Spectrum Analyzer. If all goes well, it
+  returns the serial connection object. """
+  arsa = serial.Serial(device, baud, timeout=3)
+  arsa.setDTR(True)
+  arsa.setDTR(False)
+  arsa.flushInput()
+  if arsa.readline().strip() != "[ArduinoSA]":
+    raise Exception('Device is not an ArduinoSA!')
+  return arsa
+
+
+def ReadSingleSweep(arsa):
+  """ Returns a dictionary with 100 measurements. Each single measurement is a
+  1MHz channel as key with it's RSSI as corresponding value. """
   sweep = 0
   data = {} 
+  print "%s: Starting sweep..." % time.asctime()
   while sweep < 100:
     try:
-      rawdata = arsa.readline()
-      freq, avg = rawdata.split(' ')
-      data[int(freq) + 2400] = int(avg)
-      sweep += 1
+      freq, avg = arsa.readline().split(' ')
+      if int(freq) == sweep:
+        data[int(freq) + 2400] = int(avg)
+        sweep += 1
     except ValueError:
+      print "ValueError"
       pass
-  arsa.write('s')
-  arsa.close()
   return data
 
-def ReadForever(device='ttyUSB0', baud=57600):
+def ReadForever(arsa):
   """ Prints the Frequency and it's RSSI and loops forever. """
-  arsa = serial.Serial(device, baud, timeout=1)
-  arsa.write('l')
   while True:
     try:
       freq, avg = arsa.readline().split(' ')
       print "Frequency: %sMHz, RSSI: %s" % (int(freq) + 2400, int(avg))
     except ValueError:
+      print "ValueError"
       pass
 
 def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
   """ Uses ReadSingleSweep to build up individual graph data and plots
   it to the screen. It leaves a ghost graph for previous values. """
+  arsa = ArduinoSerial(device, baud)
   plt.ion()
   x2 = y2 = None
+  # Reset serial device before starting:
   while True:
-    data = ReadSingleSweep(device, baud)
     x = []
     y = []
-    for freq, lvl in data.iteritems():
+    for freq, lvl in ReadSingleSweep(arsa).iteritems():
       x.append(freq)
       y.append(lvl)
     plt.clf()
