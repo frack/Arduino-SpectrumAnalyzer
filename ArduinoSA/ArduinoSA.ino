@@ -44,7 +44,7 @@
 #define SPI_SS 10
 #define CLOCK_RADIO SPI_CLOCK_DIV64
 // Scan all 100 channels from 2400 to 2500 MHz 
-#define NBINS 100
+#define CHANNELS 100
 
 CYWM6935 radio(RADIO_RESET, RADIO_SS);
 
@@ -58,27 +58,12 @@ void setup()
   // Base value of clock is 0, data is captured on clock’s rising edge.
   SPI.setDataMode(SPI_MODE0);
   radio.init();
+  Serial.println("[ArduinoSA]");
 }
 
 void loop() {
-  char ch;
-  ch = Serial.read();
-  if (ch == 'o'){
-    // Do a single sweep of all channels.
-    Scan();
-  }
-  else if (ch == 'l'){
-    // Loop continuous untill "s" is received.
-    while(ch != 's'){
-      Scan();
-      ch = Serial.read();
-    }
-  }
-}
-
-void Scan() {
   // Loop through all 1MHz channels.
-  for (byte i=0; i<NBINS; i++) {
+  for (byte i=0; i<CHANNELS; i++) {
     byte n = 0;
     while(n < 1) { 
       // If the RSSI received is 0, then the measurement has not returned any data.
