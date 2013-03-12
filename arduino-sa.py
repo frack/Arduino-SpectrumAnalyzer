@@ -26,7 +26,6 @@ __version__ = '0.2'
 import serial
 import time
 import sys
-import threading
 import optparse
 import matplotlib.pyplot as plt
 
@@ -49,6 +48,7 @@ def ReadSingleSweep(arsa):
   sweep = 0
   data = {} 
   print "%s: Starting sweep..." % time.asctime()
+  arsa.flushInput()
   while sweep < 100:
     try:
       freq, avg = arsa.readline().split(' ')
@@ -67,6 +67,7 @@ def ReadForever(arsa):
       freq, avg = arsa.readline().split(' ')
       print "Frequency: %sMHz, RSSI: %s" % (int(freq) + 2400, int(avg))
     except ValueError:
+      arsa.flushInput()
       print "ValueError"
       pass
 
@@ -76,7 +77,6 @@ def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
   arsa = ArduinoSerial(device, baud)
   plt.ion()
   x2 = y2 = None
-  # Reset serial device before starting:
   while True:
     x = []
     y = []
