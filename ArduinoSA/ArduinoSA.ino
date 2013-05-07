@@ -48,6 +48,8 @@
 
 CYWM6935 radio(RADIO_RESET, RADIO_SS);
 
+int ledPin = 2;
+
 void setup()   
 {
   Serial.begin(57600);
@@ -59,9 +61,11 @@ void setup()
   SPI.setDataMode(SPI_MODE0);
   radio.init();
   Serial.println("[ArduinoSA]");
+  pinMode(ledPin,OUTPUT);
 }
 
 void loop() {
+  digitalWrite(ledPin,HIGH);
   // Loop through all 1MHz channels.
   for (byte i=0; i<CHANNELS; i++) {
     byte n = 0;
@@ -75,5 +79,6 @@ void loop() {
     Serial.print(i);
     Serial.print(" ");
     Serial.println(n);
+    digitalWrite(ledPin,LOW);
   }
 }
