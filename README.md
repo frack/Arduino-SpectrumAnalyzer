@@ -12,3 +12,9 @@ Usage
 - Upload the program in 'ArduinoSA/' to your arduino
 - Run 'python arduino-sa.py' from your terminal.
 
+Serial Output
+=============
+
+The Arduino program is configured to output JSON over Serial. The format is as follows:
+{ "ArduinoSA": { "freq": frequency, "rssi": RSSI } }
+

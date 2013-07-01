@@ -60,25 +60,27 @@ void setup()
   // Base value of clock is 0, data is captured on clock’s rising edge.
   SPI.setDataMode(SPI_MODE0);
   radio.init();
-  Serial.println("[ArduinoSA]");
   pinMode(ledPin,OUTPUT);
 }
 
 void loop() {
   digitalWrite(ledPin,HIGH);
   // Loop through all 1MHz channels.
-  for (byte i=0; i<CHANNELS; i++) {
-    byte n = 0;
-    while(n < 1) { 
+  for (byte chan=0; chan<CHANNELS; chan++) {
+    byte rssi = 0;
+    byte freq = chan + 2400
+    while(rssi < 1) { 
       // If the RSSI received is 0, then the measurement has not returned any data.
       // Retry until we received valid data for this channel. 
       // RSSI_avg returns the avarage of 10 measurements for channel 'i'
       // This can be changed to RSSI_peak if you want the peak value.
-      n = radio.RSSI_avg(i, 10);
+      rssi = radio.RSSI_avg(chan, 10);
     }
-    Serial.print(i);
-    Serial.print(" ");
-    Serial.println(n);
+    Serial.print("{ \"ArduinoSA\": { \"freq\": ");
+    Serial.print(freq);
+    Serial.print(", \"rssi\": ");
+    Serial.print(rssi);
+    Serial.println(" } }");
     digitalWrite(ledPin,LOW);
   }
 }

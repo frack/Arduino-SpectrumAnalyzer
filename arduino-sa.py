@@ -28,6 +28,10 @@ import time
 import sys
 import optparse
 import matplotlib.pyplot as plt
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 def ArduinoSerial(device='ttyUSB0', baud=57600):
   """ This function Opens the arduino, resets the device by sending a DTR signal
@@ -37,23 +41,24 @@ def ArduinoSerial(device='ttyUSB0', baud=57600):
   arsa.setDTR(True)
   arsa.setDTR(False)
   arsa.flushInput()
-  if arsa.readline().strip() != "[ArduinoSA]":
+  if "ArduinoSA" in json.JSONDecoder().decode(arsa.readline()).keys():
+    return arsa
+  else:
     raise Exception('Device is not an ArduinoSA!')
-  return arsa
 
 
 def ReadSingleSweep(arsa):
   """ Returns a dictionary with 100 measurements. Each single measurement is a
   1MHz channel as key with it's RSSI as corresponding value. """
-  sweep = 0
+  sweep = 2400
   data = {} 
   print "%s: Starting sweep..." % time.asctime()
   arsa.flushInput()
-  while sweep < 100:
+  while sweep < 2500:
     try:
-      freq, avg = arsa.readline().split(' ')
-      if int(freq) == sweep:
-        data[int(freq) + 2400] = int(avg)
+      scan = json.JSONDecoder().decode(arsa.readline())["ArduinoSA"]
+      if scan["freq"] == sweep:
+        data[int(scan["freq"])] = int(data["rssi"])
         sweep += 1
     except ValueError:
       print "ValueError"
@@ -64,8 +69,9 @@ def ReadForever(arsa):
   """ Prints the Frequency and it's RSSI and loops forever. """
   while True:
     try:
-      freq, avg = arsa.readline().split(' ')
-      print "Frequency: %sMHz, RSSI: %s" % (int(freq) + 2400, int(avg))
+      scan = json.JSONDecoder().decode(arsa.readline())["ArduinoSA"]
+      freq, rssi = scan["freq"], scan["rssi"]
+      print "Frequency: %sMHz, RSSI: %s" % (int(freq), int(rssi))
     except ValueError:
       arsa.flushInput()
       print "ValueError"
