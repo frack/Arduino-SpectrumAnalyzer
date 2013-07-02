@@ -68,7 +68,7 @@ void loop() {
   // Loop through all 1MHz channels.
   for (byte chan=0; chan<CHANNELS; chan++) {
     byte rssi = 0;
-    byte freq = chan + 2400
+    int freq = int(chan) + 2400;
     while(rssi < 1) { 
       // If the RSSI received is 0, then the measurement has not returned any data.
       // Retry until we received valid data for this channel. 
