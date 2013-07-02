@@ -58,7 +58,7 @@ def ReadSingleSweep(arsa):
     try:
       scan = json.JSONDecoder().decode(arsa.readline())["ArduinoSA"]
       if scan["freq"] == sweep:
-        data[int(scan["freq"])] = int(data["rssi"])
+        data[scan["freq"]] = int(scan["rssi"])
         sweep += 1
     except ValueError:
       print "ValueError"
