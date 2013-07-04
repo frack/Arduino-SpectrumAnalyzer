@@ -64,23 +64,23 @@ void setup()
 }
 
 void loop() {
+  Serial.print("{\"ArduinoSA\":[");
   digitalWrite(ledPin,HIGH);
   // Loop through all 1MHz channels.
   for (byte chan=0; chan<CHANNELS; chan++) {
     byte rssi = 0;
     int freq = int(chan) + 2400;
-    while(rssi < 1) { 
-      // If the RSSI received is 0, then the measurement has not returned any data.
-      // Retry until we received valid data for this channel. 
-      // RSSI_avg returns the avarage of 10 measurements for channel 'i'
-      // This can be changed to RSSI_peak if you want the peak value.
-      rssi = radio.RSSI_avg(chan, 10);
+    rssi = radio.RSSI_avg(chan, 10);
+    Serial.print("{\"freq\":");
+    Serial.print(freq, DEC);
+    Serial.print(",\"rssi\":");
+    Serial.print(rssi, DEC);
+    Serial.print("}");
+    if ( chan < 99 ) {
+      Serial.print(",");
     }
-    Serial.print("{ \"ArduinoSA\": { \"freq\": ");
-    Serial.print(freq);
-    Serial.print(", \"rssi\": ");
-    Serial.print(rssi);
-    Serial.println(" } }");
+    delay(20); // Keep write speed under Serial line speed.
     digitalWrite(ledPin,LOW);
   }
+  Serial.println("]}");
 }
