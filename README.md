@@ -16,5 +16,5 @@ Serial Output
 =============
 
 The Arduino program is configured to output JSON over Serial. The format is as follows:
-{ "ArduinoSA": { "freq": frequency, "rssi": RSSI } }
+{ "ArduinoSA": [ { "freq": frequency, "rssi": RSSI }, ..., { "freq": frequency, "rssi": RSSI } ] }
 
