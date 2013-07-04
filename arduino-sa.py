@@ -4,7 +4,7 @@ https://github.com/frack/Arduino-SpectrumAnalyzer
 More information on how to build this device:
 http://frack.nl/wiki/Arduino_Spectrum_Analyzer """
 _author__ = 'Rudi Daemen <fludizz@gmail.com>'
-__version__ = '0.2'
+__version__ = '0.3'
 
 # Wifi|    Frequency (MHz)
 # Chn | Center | Start | End      
@@ -33,15 +33,16 @@ try:
 except ImportError:
     import simplejson as json
 
+
 def ArduinoSerial(device='ttyUSB0', baud=57600):
   """ This function Opens the arduino, resets the device by sending a DTR signal
   and then checks if it is an Arduino Spectrum Analyzer. If all goes well, it
   returns the serial connection object. """
-  arsa = serial.Serial(device, baud, timeout=3)
+  arsa = serial.Serial(device, baud, timeout=10)
   arsa.setDTR(True)
   arsa.setDTR(False)
-  arsa.flushInput()
-  if "ArduinoSA" in json.JSONDecoder().decode(arsa.readline()).keys():
+  arsa.readline()
+  if "ArduinoSA" in json.loads(arsa.readline()):
     return arsa
   else:
     raise Exception('Device is not an ArduinoSA!')
@@ -50,32 +51,13 @@ def ArduinoSerial(device='ttyUSB0', baud=57600):
 def ReadSingleSweep(arsa):
   """ Returns a dictionary with 100 measurements. Each single measurement is a
   1MHz channel as key with it's RSSI as corresponding value. """
-  sweep = 2400
-  data = {} 
   print "%s: Starting sweep..." % time.asctime()
-  arsa.flushInput()
-  while sweep < 2500:
-    try:
-      scan = json.JSONDecoder().decode(arsa.readline())["ArduinoSA"]
-      if scan["freq"] == sweep:
-        data[scan["freq"]] = int(scan["rssi"])
-        sweep += 1
-    except ValueError:
-      print "ValueError"
-      pass
-  return data
+  data = arsa.readline().strip()
+  try: 
+    return json.loads(data)["ArduinoSA"]
+  except ValueError:
+    print 'ValueError: %r' % data
 
-def ReadForever(arsa):
-  """ Prints the Frequency and it's RSSI and loops forever. """
-  while True:
-    try:
-      scan = json.JSONDecoder().decode(arsa.readline())["ArduinoSA"]
-      freq, rssi = scan["freq"], scan["rssi"]
-      print "Frequency: %sMHz, RSSI: %s" % (int(freq), int(rssi))
-    except ValueError:
-      arsa.flushInput()
-      print "ValueError"
-      pass
 
 def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
   """ Uses ReadSingleSweep to build up individual graph data and plots
@@ -86,11 +68,11 @@ def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
   while True:
     x = []
     y = []
-    for freq, lvl in ReadSingleSweep(arsa).iteritems():
-      x.append(freq)
-      y.append(lvl)
+    for items in ReadSingleSweep(arsa):
+      x.append(items["freq"])
+      y.append(items["rssi"])
     plt.clf()
-    if x2:
+    if x2 and y2:
       plt.plot(x,y,'r-', x2,y2,'r:')
     else:
       plt.plot(x,y, 'r-')
@@ -101,8 +83,7 @@ def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
     plt.draw()
     x2 = x
     y2 = y
-    time.sleep(.5)
-  
+
 
 if __name__ == '__main__':
   usage = "usage: %prog [options]"
