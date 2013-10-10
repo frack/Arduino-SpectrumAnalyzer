@@ -70,7 +70,7 @@ void loop() {
   for (byte chan=0; chan<CHANNELS; chan++) {
     byte rssi = 0;
     int freq = int(chan) + 2400;
-    rssi = radio.RSSI_avg(chan, 10);
+    rssi = radio.RSSI_avg(chan, 50);
     Serial.print("{\"freq\":");
     Serial.print(freq, DEC);
     Serial.print(",\"rssi\":");
@@ -79,7 +79,8 @@ void loop() {
     if ( chan < 99 ) {
       Serial.print(",");
     }
-    delay(20); // Keep write speed under Serial line speed.
+//    delay(10); // Keep write speed under Serial line speed.
+// Uncomment above in case channel count (Line 73) is less than 50
     digitalWrite(ledPin,LOW);
   }
   Serial.println("]}");
