@@ -7,7 +7,7 @@ _author__ = 'Rudi Daemen <fludizz@gmail.com>'
 __version__ = '0.3'
 
 # Wifi|    Frequency (MHz)
-# Chn | Center | Start | End      
+# Chn | Center | Start | End
 #  1  | 2412   | 2402  | 2422
 #  2  | 2417   | 2407  | 2427
 #  3  | 2422   | 2412  | 2432
@@ -52,12 +52,15 @@ def ReadSingleSweep(arsa):
   """ Returns a dictionary with 100 measurements. Each single measurement is a
   1MHz channel as key with it's RSSI as corresponding value. """
   print "%s: Starting sweep..." % time.asctime()
-  data = arsa.readline().strip()
-  try: 
-    return json.loads(data)["ArduinoSA"]
-  except ValueError:
-    print 'ValueError: %r' % data
-
+  while True:
+    data = arsa.readline().strip()
+    try: 
+      return json.loads(data)["ArduinoSA"]
+    except ValueError:
+      print 'ValueError! Unable to read data. Resetting device ...'
+      arsa.setDTR(True)
+      arsa.setDTR(False)
+      arsa.readline()
 
 def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
   """ Uses ReadSingleSweep to build up individual graph data and plots
@@ -85,6 +88,7 @@ def PlotSomeStuff(device='/dev/ttyUSB0', baud=57600):
     y2 = y
 
 
+
 if __name__ == '__main__':
   usage = "usage: %prog [options]"
   parser = optparse.OptionParser(usage=usage)
@@ -100,4 +104,7 @@ if __name__ == '__main__':
   except IndexError:
     pass
   print "Using device %s at %i baud..." % (opts.device, opts.baud)
-  PlotSomeStuff(opts.device, opts.baud)
+  try:
+    PlotSomeStuff(opts.device, opts.baud)
+  except KeyboardInterrupt:
+    sys.exit("KeyboardInterrupt - Bye bye!")
